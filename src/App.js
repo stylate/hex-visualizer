@@ -1,24 +1,75 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useRef, useState } from "react";
+import { init, renderLoop, reset } from "./visualizer";
 
 function App() {
+  useEffect(() => {
+    window.SC.initialize({
+      client_id: process.env.REACT_APP_SOUNDCLOUD_KEY
+    });
+  }, []);
+
+  const threeRoot = useRef(null);
+  useEffect(() => {
+    if (threeRoot) {
+      reset();
+      const renderCanvas = init();
+      threeRoot.current.appendChild(renderCanvas);
+      renderLoop();
+    }
+  }, [threeRoot]);
+
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [tracks, setTracks] = useState([]);
+
+  async function submitSearch(event) {
+    event.preventDefault();
+    const tracks = await window.SC.get("/tracks", {
+      q: query
+    });
+    setTracks(tracks);
+  }
+
+  async function playSound(track) {
+    const player = await window.SC.stream(`/tracks/${track.id}`);
+    player.play();
+  }
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+      <div className="three-root" ref={threeRoot} />
+      <div className="audio-search">
+        <button onClick={() => setSearchOpen(!searchOpen)}>Search</button>
+        <div
+          className={`search-container ${
+            searchOpen ? "search-container-open" : ""
+          }`}
         >
-          Learn React
-        </a>
-      </header>
+          <form onSubmit={submitSearch}>
+            <input
+              type="text"
+              placeholder="Search for songs..."
+              onChange={({ target: { value } }) => setQuery(value)}
+            />
+          </form>
+          <div className="results-container">
+            {tracks.map(track => (
+              <div
+                className="result-row"
+                id={track.id}
+                onClick={() => playSound(track)}
+              >
+                <img src={track.artwork_url} />
+                <div>
+                  <p>{track.title}</p>
+                  <p className="meta">{track.user.username}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        }
+      </div>
     </div>
   );
 }
