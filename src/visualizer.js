@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-let camera, scene, renderer, geometry, material, mesh;
+let camera, scene, renderer, geometry, material, mesh, audio;
 let teardown = false;
 
 export function init() {
@@ -31,9 +31,14 @@ export function renderLoop() {
   if (!teardown) {
     requestAnimationFrame(renderLoop);
   }
+  // Work with audio here
   mesh.rotation.x += 0.01;
   mesh.rotation.y += 0.02;
   renderer.render(scene, camera);
+}
+
+export function setAudio(audioNode) {
+  audio = audioNode;
 }
 
 export function reset() {

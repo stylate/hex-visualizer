@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { init, renderLoop, reset } from "./visualizer";
+import { init, renderLoop, setAudio, reset } from "./visualizer";
+
+const player = new Audio();
 
 function App() {
   useEffect(() => {
@@ -28,11 +30,13 @@ function App() {
       q: query
     });
     setTracks(tracks);
+    console.log(tracks);
   }
 
   async function playSound(track) {
-    const player = await window.SC.stream(`/tracks/${track.id}`);
+    player.src = `${track.stream_url}?client_id=${process.env.REACT_APP_SOUNDCLOUD_KEY}`;
     player.play();
+    setAudio(player);
   }
 
   return (
@@ -68,7 +72,6 @@ function App() {
             ))}
           </div>
         </div>
-        }
       </div>
     </div>
   );
