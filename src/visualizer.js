@@ -2,6 +2,7 @@ import * as THREE from "three";
 import OrbitControls from "three-orbitcontrols";
 import { noise } from "./noise";
 
+var root;
 var camera, controls, scene, light, light2, renderer, audio;
 
 // texture
@@ -34,7 +35,6 @@ function initRenderer() {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
   renderer.setPixelRatio( window.devicePixelRatio );
   renderer.setSize( window.innerWidth, window.innerHeight);
-  // renderer.setClearColor(0xededed);
 }
 
 function initScene() {
@@ -92,56 +92,63 @@ function initPlane() {
 
 function initMesh() {
   geometry = new THREE.SphereBufferGeometry(1, 256, 256);
-  loader = new THREE.TextureLoader(); // RETURNS A PROMISE
-  let url = "assets/rgb_noise.png";
+  var manager = new THREE.LoadingManager();
+  loader = new THREE.TextureLoader(manager); // RETURNS A PROMISE
+  loader.crossOrigin = "anonymous";
+  let url = "./assets/rgb_noise.png";
   loader.load(url, 
     (t) => {
-      t.wrapS = t.wrapT = THREE.RepeatWrapping;
-      var mat = new THREE.ShaderMaterial({
-        uniforms: {
-          freq: { type: "f", value: 0.0},
-          time: { type: "f", value: 0.0},
-          speed: { type: "f", value: 50},
-          opacity: { type: "f", value: 0.1},
-          perlin: { type: "t", value: t },
-        },
-        wireframe: true,
-        transparent: true,
-        depthTest: false,
-        vertexShader: `
-          uniform sampler2D perlin;
-          uniform float freq;
-          uniform float time;
-          uniform float speed;
-          varying vec2 vUv;
-    
-          void main() {
-            vUv = uv;
-            vec4 color = texture2D(perlin, uv); // get texture's UV coordinate
-            vec4 color_shift = texture2D(perlin, vec2(color.r, color.b) + time * freq); // update color based on audio
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position + color_shift.rgb, 1.0); // convert position
-          }
-        `,
-        fragmentShader: `
-          varying vec2 vUv;
-          uniform sampler2D perlin;
-          uniform float freq;
-          uniform float time;
-          uniform float opacity;
-    
-          void main() {
-            vec2 uv = vUv;
-            vec4 color = texture2D(perlin, uv);
-            gl_FragColor = vec4(vec3(color), opacity); 
-          }
-        `
-        });
-        mesh = new THREE.Mesh(geometry, mat);
-        mesh.scale.set(25, 25, 25);
-        scene.add(mesh);
+      texture = t;
+  }, undefined, function (err) {
+    console.log(err);
   });
-  console.log(scene);
-
+  manager.onload = () => {
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    console.log("texture: ", texture);
+    material = new THREE.ShaderMaterial({
+      uniforms: {
+        freq: { type: "f", value: 0.0},
+        time: { type: "f", value: 0.0},
+        speed: { type: "f", value: 50},
+        opacity: { type: "f", value: 0.1},
+        perlin: { type: "t", value: texture },
+      },
+      wireframe: true,
+      transparent: true,
+      depthTest: false,
+      vertexShader: `
+        uniform sampler2D perlin;
+        uniform float freq;
+        uniform float time;
+        uniform float speed;
+        varying vec2 vUv;
+  
+        void main() {
+          vUv = uv;
+          vec4 color = texture2D(perlin, uv); // get texture's UV coordinate
+          vec4 color_shift = texture2D(perlin, vec2(color.r, color.b) + time * freq); // update color based on audio
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position + color_shift.rgb, 1.0); // convert position
+        }
+      `,
+      fragmentShader: `
+        varying vec2 vUv;
+        uniform sampler2D perlin;
+        uniform float freq;
+        uniform float time;
+        uniform float opacity;
+  
+        void main() {
+          vec2 uv = vUv;
+          vec4 color = texture2D(perlin, uv);
+          gl_FragColor = vec4(vec3(color), opacity); 
+        }
+      `
+      });
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.scale.set(25, 25, 25);
+    scene.add(mesh);
+    console.log("mesh: ", mesh);
+  };
 }
 
 export function render() {
