@@ -5,9 +5,8 @@ import OrbitControls from "three-orbitcontrols";
 let camera, controls, scene, light, light2, renderer, geometry, material, mesh, audio;
 let uniforms, group, planeGeometry, planeMaterial, plane, plane2;
 let noise;
+// audio
 let listener, sound, analyser, data, loader;
-
-
 
 let teardown = false;
 
@@ -22,6 +21,7 @@ export function init() {
   initMesh();
   initGroup();
 
+  window.addEventListener('resize', resize);
   return renderer.domElement;
 }
 
@@ -39,7 +39,7 @@ function initScene() {
 }
 
 function initCamera() {
-  camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.z = 100;
   camera.lookAt(scene.position);
   camera.add(listener);
@@ -93,8 +93,10 @@ function initPlane() {
 function initMesh() {
   // uniforms
   uniforms = {
-      scale: { type: "f", value: 30.0 },
-      displacement: { type: "f", value: 300.0}
+    time: { type: "f", value: 0.0 },
+    scale: { type: "f", value: 30.0 },
+    magnitude: { type: "f", value: 0.0 },
+    displacement: { type: "f", value: 300.0}
   };
 
   // shader components / material
@@ -106,10 +108,6 @@ function initMesh() {
 
   // mesh
   geometry = new THREE.IcosahedronGeometry( 10, 5 );
-  for (var i = 0; i < geometry.vertices.length; i++) {
-    var vector = geometry.vertices[i];
-    vector._o = vector.clone();
-  }
   mesh = new THREE.Mesh(geometry, material);
 }
 
@@ -117,13 +115,15 @@ export function render() {
   if (!teardown) {
     requestAnimationFrame(render);
   }
-  // Work with audio here
-  // data = analyser.getAverageFrequency();
-  
-
-  mesh.rotation.x += 0.01;
-  mesh.rotation.y += 0.02;
-  // mesh.rotation.z += 0.01;
+  // analysis - make vertices spike?
+  data = analyser.getAverageFrequency();
+  if (data < 20) {
+    mesh.rotation.x += 0.01;
+    mesh.rotation.y += 0.02;
+  } else {
+    mesh.rotation.x -= 0.5;
+    mesh.rotation.y -= 0.6;
+  }
   controls.update();
   renderer.render(scene, camera);
 }
@@ -138,14 +138,15 @@ function initAudio(audio) {
   sound = new THREE.Audio(listener);
   loader.load(audio.src, function(buffer) {
     sound.setBuffer(buffer);
-    // sound.setRefDistance(20);
     sound.play();
   })
   analyser = new THREE.AudioAnalyser(sound, 32);
-  
 }
 
-function vibrate() {
+function resize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 export function reset() {
