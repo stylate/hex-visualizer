@@ -1,10 +1,12 @@
 import * as THREE from "three";
 import OrbitControls from "three-orbitcontrols";
 
-/* three.js */
-let camera, controls, scene, light, light2, renderer, geometry, material, mesh, audio;
-let uniforms, group, planeGeometry, planeMaterial, plane, plane2;
-let noise;
+let camera, controls, scene, light, light2, renderer, audio;
+
+// texture
+let texture, geometry, material, mesh;
+
+let group, planeGeometry, planeMaterial, plane, plane2;
 // audio
 let listener, sound, analyser, data, loader;
 
@@ -27,19 +29,20 @@ export function init() {
 
 function initRenderer() {
   renderer = new THREE.WebGLRenderer({alpha: true, antialias: true});
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
   renderer.setPixelRatio( window.devicePixelRatio );
   renderer.setSize( window.innerWidth, window.innerHeight);
-  renderer.setClearColor(0xededed);
+  // renderer.setClearColor(0xededed);
 }
 
 function initScene() {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color( 0xc8a2c8 );
   scene.fog = new THREE.Fog( 0x000000, 1, 1000 );
 }
 
 function initCamera() {
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.z = 100;
   camera.lookAt(scene.position);
   camera.add(listener);
@@ -60,18 +63,13 @@ function initGroup() {
 }
 
 function initLight() {
-  scene.add( new THREE.AmbientLight( 0x222222 ) );
-  light = new THREE.DirectionalLight( 0x590D82, 0.5 );
-  light.position.set( 200, 300, 400 );
-  scene.add( light );
-
-  light2 = light.clone();
-  light2.position.set( -200, 300, 400 );
-  scene.add(light2);
-
-  var pointLight = new THREE.PointLight(0xffffff);
-  pointLight.position.set(0, 0, 0);
-  scene.add(pointLight);
+  var directionalLight = new THREE.DirectionalLight(0xffffff, .7);
+  directionalLight.position.set(1, -1, 0).normalize();
+  directionalLight.castShadow = true;
+  var ambientLight = new THREE.AmbientLight(0xffffff);
+  
+  scene.add(ambientLight);
+  scene.add(directionalLight);
 }
 
 function initPlane() {
@@ -91,24 +89,54 @@ function initPlane() {
 }
 
 function initMesh() {
-  // uniforms
-  uniforms = {
-    time: { type: "f", value: 0.0 },
-    scale: { type: "f", value: 30.0 },
-    magnitude: { type: "f", value: 0.0 },
-    displacement: { type: "f", value: 300.0}
-  };
 
-  // shader components / material
-  material = new THREE.MeshPhongMaterial({
-    emissive: 0xffc2cd,
-    emissiveIntensity: 0.4,
-    shininess: 0
-  });
+  geometry = new THREE.SphereBufferGeometry(1, 256, 256);
+
+  // load texture
+  texture = new THREE.TextureLoader().load('assets/rgb_noise.png');
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+
+  material = new THREE.ShaderMaterial({
+    uniforms: {
+      freq: { type: "f", value: 0.0},
+      time: { type: "f", value: 0.0},
+      speed: { type: "f", value: 0.0},
+      opacity: { type: "f", value: 0.1},
+      perlin: { type: "t", value: texture },
+    },
+    wireframe: true,
+
+    transparent: true,
+    depthTest: false,
+    vertexShader: `
+      uniform sampler2D perlin;
+      uniform float freq;
+      uniform float opacity;
+      varying vec2 vUv;
+
+      void main() {
+        vUv = uv;
+        vec4 color = texture2D(perlin, uv); // get texture's UV coordinate
+        vec4 color2 = texture2D(perlin, vec2(color.r, color.b) + freq); // update color based on audio
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position + color.rgb, 1.0); // convert position
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D perlin;
+      uniform float freq;
+      uniform float opacity;
+      varying vec2 vUv;
+
+      void main() {
+        vec4 color = texture2D(perlin, vUv + freq);
+        gl_FragColor = vec4(vec3(color), opacity); 
+      }
+    `
+  })
 
   // mesh
-  geometry = new THREE.IcosahedronGeometry( 10, 5 );
   mesh = new THREE.Mesh(geometry, material);
+  mesh.scale.set(25, 25, 25);
 }
 
 export function render() {
@@ -117,13 +145,23 @@ export function render() {
   }
   // analysis - make vertices spike?
   data = analyser.getAverageFrequency();
-  if (data < 20) {
-    mesh.rotation.x += 0.01;
-    mesh.rotation.y += 0.02;
+  console.log(data);
+
+  // standard update
+  mesh.material.uniforms['time'].value += 0.02;
+
+  // differentiate frequencies
+  if (data < 90) {
+    mesh.material.uniforms['opacity'].value = 0.05;
+    mesh.material.uniforms['freq'].value = data * 0.00000025;
+  } else if (data < 130) {
+    mesh.material.uniforms['freq'].value = data * 0.00000025;
+    mesh.material.uniforms['opacity'].value = data / 500;
   } else {
-    mesh.rotation.x -= 0.5;
-    mesh.rotation.y -= 0.6;
+    mesh.material.uniforms['freq'].value = data * 0.00000025;
+    mesh.material.uniforms['opacity'].value = data / 200;
   }
+  
   controls.update();
   renderer.render(scene, camera);
 }
