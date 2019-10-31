@@ -126,11 +126,12 @@ function initMesh() {
         uniform sampler2D perlin;
         uniform float freq;
         uniform float time;
+        uniform float speed;
         uniform float opacity;
   
         void main() {
           vec2 uv = vUv;
-          vec4 color = texture2D(perlin, uv);
+          vec4 color = texture2D(perlin, uv + time * freq);
           gl_FragColor = vec4(vec3(color), opacity); 
         }
       `
@@ -158,15 +159,15 @@ export function render() {
   // differentiate frequencies
   
   if (data === 0) {
-    mesh.material.uniforms['freq'].value = data;
+    mesh.material.uniforms['freq'].value = data * 0.00005;
   } else if (data < 80) {
     mesh.material.uniforms['opacity'].value = 0.1;
-    mesh.material.uniforms['freq'].value = data;
+    mesh.material.uniforms['freq'].value = data * 0.00005;
   } else if (data < 140) {
-    mesh.material.uniforms['freq'].value = data;
+    mesh.material.uniforms['freq'].value = data * 0.00005;
     mesh.material.uniforms['opacity'].value = data / 1000;
   } else {
-    mesh.material.uniforms['freq'].value = data;
+    mesh.material.uniforms['freq'].value = data * 0.00005;
     mesh.material.uniforms['opacity'].value = data / 800;
   }
   
