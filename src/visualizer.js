@@ -7,10 +7,20 @@ let teardown = false;
 
 export function init() {
   teardown = false;
+
+  // scene
   scene = new THREE.Scene();
+  scene.background = new THREE.Color( 0xc8a2c8 );
+  scene.fog = new THREE.Fog( 0x000000, 1, 1000 );
+  // scene.add( new THREE.AmbientLight( 0x222222 ) );
+
+  // light
+  light = new THREE.DirectionalLight( 0xffffff );
+  light.position.set( 1, 1, 1 );
+  scene.add( light );
 
   // camera
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.z = 100;
   camera.lookAt(scene.position);
   controls = new OrbitControls(camera);
@@ -18,19 +28,9 @@ export function init() {
   controls.enabled = false;
   controls.update();
 
-  // scene
-  scene.fog = new THREE.Fog( 0x000000, 1, 1000 );
-  scene.add( new THREE.AmbientLight( 0x222222 ) );
-
-  // light
-  light = new THREE.DirectionalLight( 0xffffff );
-	light.position.set( 1, 1, 1 );
-  scene.add( light );
-
   // plane
   planeGeometry = new THREE.PlaneGeometry(800, 800, 20, 20);
   planeMaterial = new THREE.MeshLambertMaterial({
-      color: 0xb19cd9,
       side: THREE.DoubleSide,
       wireframe: true
   });
@@ -52,7 +52,7 @@ export function init() {
   // shader components / material
   material = new THREE.ShaderMaterial({
     uniforms: uniforms,
-    color: 0xb7ff00,
+    color: 0xfff7e4,
     wireframe: true
   });
 
@@ -83,6 +83,7 @@ export function renderLoop() {
   // Work with audio here
   mesh.rotation.x += 0.01;
   mesh.rotation.y += 0.02;
+  // mesh.rotation.z += 0.01;
   controls.update();
   renderer.render(scene, camera);
 }
