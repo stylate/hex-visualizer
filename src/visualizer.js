@@ -63,13 +63,18 @@ function initGroup() {
 }
 
 function initLight() {
-  var directionalLight = new THREE.DirectionalLight(0xffffff, .7);
-  directionalLight.position.set(1, -1, 0).normalize();
-  directionalLight.castShadow = true;
-  var ambientLight = new THREE.AmbientLight(0xffffff);
-  
-  scene.add(ambientLight);
-  scene.add(directionalLight);
+  scene.add( new THREE.AmbientLight( 0x222222 ) );
+  light = new THREE.DirectionalLight( 0x590D82, 0.5 );
+  light.position.set( 200, 300, 400 );
+  scene.add( light );
+
+  light2 = light.clone();
+  light2.position.set( -200, 300, 400 );
+  scene.add(light2);
+
+  var pointLight = new THREE.PointLight(0xffffff);
+  pointLight.position.set(0, 0, 0);
+  scene.add(pointLight);
 }
 
 function initPlane() {
