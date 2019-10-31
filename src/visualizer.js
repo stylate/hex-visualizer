@@ -1,8 +1,7 @@
 import * as THREE from "three";
 import OrbitControls from "three-orbitcontrols";
-import { noise } from "./noise";
+import noise from "./assets/rgb_noise.png";
 
-var root;
 var camera, controls, scene, light, light2, renderer, audio;
 
 // texture
@@ -92,20 +91,12 @@ function initPlane() {
 
 function initMesh() {
   geometry = new THREE.SphereBufferGeometry(1, 256, 256);
-  var manager = new THREE.LoadingManager();
-  loader = new THREE.TextureLoader(manager); // RETURNS A PROMISE
-  loader.crossOrigin = "anonymous";
-  let url = "./assets/rgb_noise.png";
-  loader.load(url, 
+  loader = new THREE.TextureLoader();
+  loader.load(noise, 
     (t) => {
       texture = t;
-  }, undefined, function (err) {
-    console.log(err);
-  });
-  manager.onload = () => {
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-    console.log("texture: ", texture);
-    material = new THREE.ShaderMaterial({
+      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+      material = new THREE.ShaderMaterial({ 
       uniforms: {
         freq: { type: "f", value: 0.0},
         time: { type: "f", value: 0.0},
@@ -147,8 +138,9 @@ function initMesh() {
     mesh = new THREE.Mesh(geometry, material);
     mesh.scale.set(25, 25, 25);
     scene.add(mesh);
-    console.log("mesh: ", mesh);
-  };
+  }, undefined, function (err) {
+    console.log(err);
+  });
 }
 
 export function render() {
@@ -157,14 +149,14 @@ export function render() {
   }
   // console.log(mesh);
   // analysis - make vertices spike?
-  /*data = analyser.getAverageFrequency();
-  console.log(data);*/
+  data = analyser.getAverageFrequency();
+  console.log(data);
 
   // standard update
-  // mesh.material.uniforms['time'].value += 0.02;
+  mesh.material.uniforms['time'].value += 0.02;
 
   // differentiate frequencies
-  /*
+  
   if (data === 0) {
     mesh.material.uniforms['freq'].value = data;
   } else if (data < 80) {
@@ -176,7 +168,7 @@ export function render() {
   } else {
     mesh.material.uniforms['freq'].value = data;
     mesh.material.uniforms['opacity'].value = data / 800;
-  }*/
+  }
   
   controls.update();
   renderer.render(scene, camera);

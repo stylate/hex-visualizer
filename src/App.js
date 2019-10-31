@@ -16,7 +16,6 @@ function App() {
       reset();
       const renderCanvas = init();
       threeRoot.current.appendChild(renderCanvas);
-      render();
     }
   }, [threeRoot]);
 
@@ -36,7 +35,7 @@ function App() {
   async function playSound(track) {
     player.src = `${track.stream_url}?client_id=${process.env.REACT_APP_SOUNDCLOUD_KEY}`;
     setAudio(player);
-    // render();
+    render();
   }
 
   return (
