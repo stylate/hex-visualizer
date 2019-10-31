@@ -1,9 +1,14 @@
 import * as THREE from "three";
 import OrbitControls from "three-orbitcontrols";
 
+/* three.js */
 let camera, controls, scene, light, renderer, geometry, material, mesh, audio;
 let uniforms, group, planeGeometry, planeMaterial, plane, plane2;
 let teardown = false;
+
+/* webaudio api */
+let audioContext, gainNode, boost, isMuted, source;
+let analyser, bufferLength, dataArray;
 
 export function init() {
   teardown = false;
@@ -90,6 +95,34 @@ export function renderLoop() {
 
 export function setAudio(audioNode) {
   audio = audioNode;
+  // initialization
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  isMuted = false;
+  boost = 0;
+  
+  // create js node
+  audio.crossOrigin = "anonymous";
+  source = audioContext.createMediaElementSource(audio);
+  source.connect(audioContext.destination);
+  
+  // analyser
+  analyser = audioContext.createAnalyser();
+  analyser.smoothingTimeConstant = 0.3;
+  analyser.fftSize = 512;
+  bufferLength = analyser.frequencyBinCount;
+  dataArray = new Uint8Array(bufferLength);
+  
+  // gainNode
+  gainNode = audioContext.createGain();
+  gainNode.gain.value = 1;
+  
+  // connections
+  source.connect(analyser);
+  analyser.connect(audioContext.destination);
+  analyser.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  source.mediaElement.play();
 }
 
 export function reset() {

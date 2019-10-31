@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { init, renderLoop, setAudio, reset } from "./visualizer";
-import { audioInit } from "./process";
 
 const player = new Audio();
 
@@ -37,7 +36,6 @@ function App() {
   async function playSound(track) {
     player.src = `${track.stream_url}?client_id=${process.env.REACT_APP_SOUNDCLOUD_KEY}`;
     setAudio(player);
-    audioInit(player);
     // process audio here
   }
 
