@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { init, renderLoop, setAudio, reset } from "./visualizer";
+import { init, render, setAudio, reset } from "./visualizer";
 
 const player = new Audio();
 
@@ -16,7 +16,7 @@ function App() {
       reset();
       const renderCanvas = init();
       threeRoot.current.appendChild(renderCanvas);
-      renderLoop();
+      render();
     }
   }, [threeRoot]);
 
