@@ -43,7 +43,6 @@ function initScene() {
 
 function initCamera() {
   camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.x -= 150;
   camera.position.z = 100;
   camera.lookAt(scene.position);
   camera.add(listener);
@@ -135,7 +134,8 @@ function initMesh() {
       `
       });
     mesh = new THREE.Mesh(geometry, material);
-    mesh.scale.set(25, 25, 25);
+    mesh.position.x -= 30;
+    mesh.scale.set(20, 20, 20);
     scene.add(mesh);
   }, undefined, function (err) {
     console.log(err);
