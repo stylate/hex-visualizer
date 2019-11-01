@@ -42,7 +42,8 @@ function initScene() {
 }
 
 function initCamera() {
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.x -= 150;
   camera.position.z = 100;
   camera.lookAt(scene.position);
   camera.add(listener);
@@ -100,7 +101,6 @@ function initMesh() {
       uniforms: {
         freq: { type: "f", value: 0.0},
         time: { type: "f", value: 0.0},
-        speed: { type: "f", value: 50},
         opacity: { type: "f", value: 0.1},
         perlin: { type: "t", value: texture },
       },
@@ -111,7 +111,6 @@ function initMesh() {
         uniform sampler2D perlin;
         uniform float freq;
         uniform float time;
-        uniform float speed;
         varying vec2 vUv;
   
         void main() {
@@ -126,7 +125,6 @@ function initMesh() {
         uniform sampler2D perlin;
         uniform float freq;
         uniform float time;
-        uniform float speed;
         uniform float opacity;
   
         void main() {
@@ -154,21 +152,32 @@ export function render() {
   console.log(data);
 
   // standard update
-  mesh.material.uniforms['time'].value += 0.02;
+  mesh.material.uniforms['time'].value += 0.00001;
 
-  // differentiate frequencies
-  
+  // differentiate frequencies. needs more fine tuning (only accurate for more "hard-hitting" songs).
+  // project extension: instead of average frequency, separate by bass, treble, etc.!
+  console.log(data)
   if (data === 0) {
-    mesh.material.uniforms['freq'].value = data * 0.00005;
-  } else if (data < 80) {
+    mesh.material.uniforms['freq'].value = 0.1;
     mesh.material.uniforms['opacity'].value = 0.1;
-    mesh.material.uniforms['freq'].value = data * 0.00005;
-  } else if (data < 140) {
-    mesh.material.uniforms['freq'].value = data * 0.00005;
+  } else if (data < 30) {
+    mesh.material.uniforms['opacity'].value = 0.1;
+    mesh.material.uniforms['freq'].value = data / 2500;
+  } else if (data < 50) {
+    mesh.material.uniforms['opacity'].value = data / 5000;
+    mesh.material.uniforms['freq'].value = data / 1500;
+  } else if (data < 70) {
+    mesh.material.uniforms['opacity'].value = data / 2500;
+    mesh.material.uniforms['freq'].value = data / 700;
+  } else if (data < 90) {
+    mesh.material.uniforms['opacity'].value = data / 1700;
+    mesh.material.uniforms['freq'].value = data / 300;
+  } else if (data < 110) {
     mesh.material.uniforms['opacity'].value = data / 1000;
+    mesh.material.uniforms['freq'].value = data / 100;
   } else {
-    mesh.material.uniforms['freq'].value = data * 0.00005;
-    mesh.material.uniforms['opacity'].value = data / 800;
+    mesh.material.uniforms['opacity'].value = data / 600;
+    mesh.material.uniforms['freq'].value = data / 25;
   }
   
   controls.update();
@@ -187,7 +196,7 @@ function initAudio(audio) {
     sound.setBuffer(buffer);
     sound.play();
   })
-  analyser = new THREE.AudioAnalyser(sound, 32);
+  analyser = new THREE.AudioAnalyser(sound, 512);
 }
 
 function resize() {
