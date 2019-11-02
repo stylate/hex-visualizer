@@ -2,27 +2,28 @@ import * as THREE from "three";
 import OrbitControls from "three-orbitcontrols";
 import noise from "./assets/rgb_noise.png";
 
-var camera, controls, scene, light, light2, renderer, audio;
+// important features
+var camera, controls, scene, light, light2, renderer;
 
-// texture
-var texture, loader, geometry, material, mesh;
-
+// mesh variables for sphere and plane
+var loader, geometry, material, mesh;
 var planeGeometry, planeMaterial, plane, plane2;
-// audio
-var listener, sound, analyser, data, audioLoader;
 
+// audio
+var audio, listener, sound, analyser, data, audioLoader;
+
+// reset
 var teardown = false;
 
 export function init() {
-  teardown = false;
   listener = new THREE.AudioListener();
-  initRenderer();
-  initScene();
+  scene = new THREE.Scene();
   initCamera();
   initLight();
   initPlane();
   initMesh();
   initGroup();
+  initRenderer();
 
   window.addEventListener('resize', resize);
   return renderer.domElement;
@@ -34,11 +35,6 @@ function initRenderer() {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
   renderer.setPixelRatio( window.devicePixelRatio );
   renderer.setSize( window.innerWidth, window.innerHeight);
-}
-
-function initScene() {
-  scene = new THREE.Scene();
-  scene.fog = new THREE.Fog( 0x000000, 1, 1000 );
 }
 
 function initCamera() {
@@ -59,6 +55,8 @@ function initGroup() {
 }
 
 function initLight() {
+  scene.fog = new THREE.Fog( 0x000000, 1, 1000 );
+
   scene.add( new THREE.AmbientLight( 0x222222 ) );
   light = new THREE.DirectionalLight( 0x590D82, 0.5 );
   light.position.set( 200, 300, 400 );
@@ -93,46 +91,46 @@ function initMesh() {
   geometry = new THREE.SphereBufferGeometry(1, 256, 256);
   loader = new THREE.TextureLoader();
   loader.load(noise, 
-    (t) => {
-      texture = t;
+    (texture) => {
+      // initialize the horizontal and vertical texture wrapping to infinity
       texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
       material = new THREE.ShaderMaterial({ 
-      uniforms: {
-        freq: { type: "f", value: 0.0},
-        time: { type: "f", value: 0.0},
-        opacity: { type: "f", value: 0.1},
-        perlin: { type: "t", value: texture },
-      },
-      wireframe: true,
-      transparent: true,
-      depthTest: false,
-      vertexShader: `
-        uniform sampler2D perlin;
-        uniform float freq;
-        uniform float time;
-        varying vec2 vUv;
-  
-        void main() {
-          vUv = uv;
-          vec4 color = texture2D(perlin, uv); // get texture's UV coordinate
-          vec4 color_shift = texture2D(perlin, vec2(color.r, color.b) + time * freq); // update color based on audio
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position + color_shift.rgb, 1.0); // convert position
-        }
-      `,
-      fragmentShader: `
-        varying vec2 vUv;
-        uniform sampler2D perlin;
-        uniform float freq;
-        uniform float time;
-        uniform float opacity;
-  
-        void main() {
-          vec2 uv = vUv;
-          vec4 color = texture2D(perlin, uv + time * freq);
-          gl_FragColor = vec4(vec3(color), opacity); 
-        }
-      `
-      });
+        uniforms: {
+          freq: { type: "f", value: 0.0},
+          time: { type: "f", value: 0.0},
+          opacity: { type: "f", value: 0.1},
+          perlin: { type: "t", value: texture },
+        },
+        wireframe: true,
+        transparent: true,
+        depthTest: false,
+        vertexShader: `
+          uniform sampler2D perlin;
+          uniform float freq;
+          uniform float time;
+          varying vec2 vUv;
+    
+          void main() {
+            vUv = uv;
+            vec4 color = texture2D(perlin, uv); // get texture's UV coordinate
+            vec4 color_shift = texture2D(perlin, vec2(color.r, color.b) + time * freq); // update color based on audio
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position + color_shift.rgb, 1.0); // convert position
+          }
+        `,
+        fragmentShader: `
+          varying vec2 vUv;
+          uniform sampler2D perlin;
+          uniform float freq;
+          uniform float time;
+          uniform float opacity;
+    
+          void main() {
+            vec2 uv = vUv;
+            vec4 color = texture2D(perlin, uv + time * freq);
+            gl_FragColor = vec4(vec3(color), opacity); 
+          }
+        `
+    });
     mesh = new THREE.Mesh(geometry, material);
     mesh.position.x -= 30;
     mesh.scale.set(20, 20, 20);
@@ -146,8 +144,7 @@ export function render() {
   if (!teardown) {
     requestAnimationFrame(render);
   }
-  // console.log(mesh);
-  // analysis - make vertices spike?
+
   data = analyser.getAverageFrequency();
 
   // standard update
@@ -162,10 +159,10 @@ export function render() {
   } else if (data < 30) {
     mesh.material.uniforms['opacity'].value = 0.1;
     mesh.material.uniforms['freq'].value = data / 2500;
-  } else if (data < 60) {
+  } else if (data < 50) {
     mesh.material.uniforms['opacity'].value = data / 5000;
     mesh.material.uniforms['freq'].value = data / 1500;
-  } else if (data < 90) {
+  } else if (data < 80) {
     mesh.material.uniforms['opacity'].value = data / 1700;
     mesh.material.uniforms['freq'].value = data / 300;
   } else {
