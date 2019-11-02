@@ -149,7 +149,6 @@ export function render() {
   // console.log(mesh);
   // analysis - make vertices spike?
   data = analyser.getAverageFrequency();
-  console.log(data);
 
   // standard update
   mesh.material.uniforms['time'].value += 0.00001;
@@ -163,23 +162,16 @@ export function render() {
   } else if (data < 30) {
     mesh.material.uniforms['opacity'].value = 0.1;
     mesh.material.uniforms['freq'].value = data / 2500;
-  } else if (data < 50) {
+  } else if (data < 60) {
     mesh.material.uniforms['opacity'].value = data / 5000;
     mesh.material.uniforms['freq'].value = data / 1500;
-  } else if (data < 70) {
-    mesh.material.uniforms['opacity'].value = data / 2500;
-    mesh.material.uniforms['freq'].value = data / 700;
   } else if (data < 90) {
     mesh.material.uniforms['opacity'].value = data / 1700;
     mesh.material.uniforms['freq'].value = data / 300;
-  } else if (data < 110) {
-    mesh.material.uniforms['opacity'].value = data / 1000;
-    mesh.material.uniforms['freq'].value = data / 100;
   } else {
     mesh.material.uniforms['opacity'].value = data / 600;
     mesh.material.uniforms['freq'].value = data / 25;
   }
-  
   controls.update();
   renderer.render(scene, camera);
 }
@@ -196,7 +188,7 @@ function initAudio(audio) {
     sound.setBuffer(buffer);
     sound.play();
   })
-  analyser = new THREE.AudioAnalyser(sound, 512);
+  analyser = new THREE.AudioAnalyser(sound, 2048);
 }
 
 function resize() {
