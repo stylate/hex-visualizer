@@ -113,10 +113,8 @@ function initMesh() {
           void main() {
             vUv = uv;
             vec4 color = texture2D(perlin, uv); // get texture's UV coordinate
-            vec4 color_shift = texture2D(perlin, vec2(color.r, color.b) 
-            + time * freq); // update color based on audio
-            gl_Position = projectionMatrix * modelViewMatrix * 
-            vec4(position + color_shift.rgb, 1.0); // convert position
+            vec4 color_shift = texture2D(perlin, vec2(color.r, color.g) + time * freq); // update color based on audio
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position + color_shift.rgb, 1.0); // convert position
           }
         `,
         fragmentShader: `
