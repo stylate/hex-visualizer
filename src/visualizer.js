@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import OrbitControls from "three-orbitcontrols";
-import noise from "./assets/rgb_noise.png";
 
 var camera, controls, scene, light, light2, renderer, audio;
 
@@ -25,21 +24,6 @@ function initAudio(audio) {
   /* YOUR CODE HERE */
 }
 
-export function init() {
-  teardown = false;
-  listener = new THREE.AudioListener();
-  scene = new THREE.Scene();
-  initRenderer();
-  initCamera();
-  initLight();
-  initPlane();
-  initMesh();
-  initGroup();
-
-  window.addEventListener("resize", resize);
-  return renderer.domElement;
-}
-
 function initRenderer() {
   /* YOUR CODE HERE */
 }
@@ -58,6 +42,21 @@ function initPlane() {
 
 export function render() {
   /* YOUR CODE HERE */
+}
+
+export function init() {
+  teardown = false;
+  listener = new THREE.AudioListener();
+  scene = new THREE.Scene();
+  initRenderer();
+  initCamera();
+  initLight();
+  initPlane();
+  initMesh();
+  initGroup();
+
+  window.addEventListener("resize", resize);
+  return renderer.domElement;
 }
 
 export function setAudio(audioNode) {
