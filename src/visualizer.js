@@ -3,7 +3,10 @@ import OrbitControls from "three-orbitcontrols";
 import noise from "./assets/rgb_noise.png";
 
 // important features
-var camera, controls, scene, light, light2, renderer;
+var camera, controls, scene, renderer;
+
+// light
+var light, light2, pointLight;
 
 // mesh variables for sphere and plane
 var loader, geometry, material, mesh;
@@ -31,8 +34,6 @@ export function init() {
 
 function initRenderer() {
   renderer = new THREE.WebGLRenderer({antialias: true});
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
   renderer.setPixelRatio( window.devicePixelRatio );
   renderer.setSize( window.innerWidth, window.innerHeight);
 }
@@ -51,6 +52,9 @@ function initCamera() {
 function initGroup() {
   scene.add(plane);
   scene.add(plane2);
+  scene.add(light);
+  scene.add(light2);
+  scene.add(pointLight);
   scene.add(camera);
 }
 
@@ -60,15 +64,11 @@ function initLight() {
   scene.add( new THREE.AmbientLight( 0x222222 ) );
   light = new THREE.DirectionalLight( 0x590D82, 0.5 );
   light.position.set( 200, 300, 400 );
-  scene.add(light);
-
   light2 = light.clone();
   light2.position.set( -200, 300, 400 );
-  scene.add(light2);
 
-  var pointLight = new THREE.PointLight(0xffffff);
+  pointLight = new THREE.PointLight(0xffffff);
   pointLight.position.set(0, 0, 0);
-  scene.add(pointLight);
 }
 
 function initPlane() {
